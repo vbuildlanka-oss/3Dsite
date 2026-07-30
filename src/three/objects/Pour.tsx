@@ -6,21 +6,27 @@ import { stage } from '../stage';
 import { CUP } from '../geometry/cup';
 import { clamp, damp, lerp } from '@/lib/math';
 
-const HEIGHT = 1.7;
+/** World height the stream issues from — also where the kettle spout parks. */
+export const POUR_TOP = 1.7;
+
+const HEIGHT = POUR_TOP - CUP.floor;
 
 /**
- * The pour: a tapering, swaying column of coffee falling into the cup, with a
- * matching splash ring on the surface. The stream's length is scroll-driven, so
- * the viewer is the one tipping the jug.
+ * The pour: a tapering, swaying column falling from the kettle spout into the
+ * cup, with a splash ring riding the rising surface. Length is scroll-driven,
+ * so the viewer is the one tipping the kettle.
  */
 export function Pour() {
   const group = useRef<THREE.Group>(null);
   const ring = useRef<THREE.Mesh>(null);
 
   const material = useMemo(() => new PourMaterial(), []);
-  const geometry = useMemo(() => new THREE.CylinderGeometry(0.062, 0.05, HEIGHT, 20, 26, true), []);
+  const geometry = useMemo(
+    () => new THREE.CylinderGeometry(0.036, 0.023, HEIGHT, 20, 30, true),
+    [],
+  );
 
-  const ringGeo = useMemo(() => new THREE.RingGeometry(0.06, 0.26, 40), []);
+  const ringGeo = useMemo(() => new THREE.RingGeometry(0.05, 0.24, 44), []);
   const ringMat = useMemo(
     () =>
       new THREE.MeshBasicMaterial({
@@ -52,30 +58,27 @@ export function Pour() {
     if (group.current) group.current.visible = vis;
     if (!vis) return;
 
+    // Follows the same spiral the kettle traces.
+    if (group.current) group.current.position.set(stage.pourX, CUP.seat, stage.pourZ);
+
     const u = material.uniforms;
     u.uTime.value = stage.time;
-    u.uOpacity.value = shown.current * 0.95;
+    u.uOpacity.value = shown.current;
     u.uProgress.value = damp(u.uProgress.value, stage.pourLen, 5, stage.dt);
     u.uWobble.value = 0.7 + Math.abs(stage.vel) * 1.4;
 
-    // Splash ripple pulses while the stream is actually landing.
     if (ring.current) {
       const beat = (stage.time * 1.8) % 1;
-      ring.current.position.y = lerp(CUP.floor + 0.06, CUP.height - 0.08, clamp(stage.fill));
+      ring.current.position.y = lerp(CUP.floor + 0.06, CUP.height - 0.09, clamp(stage.fill));
       ring.current.scale.setScalar(0.6 + beat * 1.5);
-      ringMat.opacity = (1 - beat) * 0.5 * shown.current * u.uProgress.value;
+      ringMat.opacity = (1 - beat) * 0.45 * shown.current * u.uProgress.value;
     }
   });
 
   return (
-    <group ref={group} position={[0, 0.045, 0]}>
-      <mesh geometry={geometry} material={material} position={[0, CUP.height + HEIGHT / 2 - 0.1, 0]} />
-      <mesh
-        ref={ring}
-        geometry={ringGeo}
-        material={ringMat}
-        rotation={[-Math.PI / 2, 0, 0]}
-      />
+    <group ref={group} position={[0, CUP.seat, 0]}>
+      <mesh geometry={geometry} material={material} position={[0, CUP.floor + HEIGHT / 2, 0]} />
+      <mesh ref={ring} geometry={ringGeo} material={ringMat} rotation={[-Math.PI / 2, 0, 0]} />
     </group>
   );
 }

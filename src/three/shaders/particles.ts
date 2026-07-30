@@ -268,7 +268,7 @@ export class DustMaterial extends THREE.ShaderMaterial {
       uniforms: {
         uTime: { value: 0 },
         uIntensity: { value: 0.5 },
-        uWorldSize: { value: 0.014 },
+        uWorldSize: { value: 0.009 },
         uViewHeight: { value: 900 },
         uDrift: { value: 0 },
         uColor: { value: new THREE.Color('#e8c79a').convertSRGBToLinear() },

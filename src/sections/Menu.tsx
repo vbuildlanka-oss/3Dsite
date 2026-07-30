@@ -23,7 +23,7 @@ export function Menu() {
     >
       <div className="shell">
         <div className="section__head">
-          <span className="label">04 — Counter</span>
+          <span className="label">The counter</span>
         </div>
 
         <h2 className="panel-title" id="menu-title" style={{ marginBottom: '2.5rem' }}>
@@ -34,12 +34,11 @@ export function Menu() {
           {MENU.map((item, i) => (
             <li
               className="menu__row"
-              key={item.n}
+              key={item.name}
               data-cursor="Taste"
               data-reveal="fade"
               data-reveal-delay={i * 0.04}
             >
-              <span className="menu__n">{item.n}</span>
               <span className="menu__name">
                 {item.name}
                 <small>{item.detail}</small>

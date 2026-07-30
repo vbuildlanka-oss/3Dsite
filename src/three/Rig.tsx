@@ -58,24 +58,18 @@ export function Rig() {
     }
 
     if (key.current) {
-      key.current.intensity = lerp(2.1, 3.4, clamp(stage.glow));
+      key.current.intensity = lerp(1.25, 2.1, clamp(stage.glow));
     }
   });
 
   return (
     <>
-      <ambientLight intensity={0.35} color="#c99a6a" />
+      <ambientLight intensity={0.22} color="#c99a6a" />
 
-      <directionalLight
-        ref={key}
-        position={[-3.2, 4.4, 2.6]}
-        intensity={2.4}
-        color="#ffd7ab"
-      />
-      {/* Cool counter-light so the ceramic edge separates from the background. */}
-      <directionalLight position={[3.6, 1.6, -3.2]} intensity={1.5} color="#6f86a8" />
-      {/* Warm kicker from below, as if bouncing off the counter. */}
-      <pointLight position={[0.6, -0.4, 1.6]} intensity={1.5} distance={6.5} decay={2} color="#c96a24" />
+      {/* Fills only — the shadow-casting key light lives with the subject so
+          its pool of light travels when the subject is re-framed. */}
+      <directionalLight ref={key} position={[-3.4, 4.2, 2.8]} intensity={1.5} color="#ffd7ab" />
+      <directionalLight position={[3.6, 1.8, -3.4]} intensity={0.42} color="#7d90ad" />
 
       {/*
         Studio in a box. Round emitters keep their reflections soft — a

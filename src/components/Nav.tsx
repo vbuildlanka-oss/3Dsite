@@ -58,7 +58,7 @@ export function Nav() {
       </a>
 
       <nav className="nav__links" aria-label="Sections">
-        {LINKS.map((link, i) => (
+        {LINKS.map((link) => (
           <a
             key={link.id}
             className="nav__link"
@@ -69,7 +69,6 @@ export function Nav() {
               scrollTo(actScrollTarget(link.id));
             }}
           >
-            <span className="nav__link-index">0{i + 1}</span>
             {link.label}
           </a>
         ))}

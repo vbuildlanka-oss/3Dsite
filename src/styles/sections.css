@@ -244,7 +244,6 @@
 .lot {
   position: relative;
   display: grid;
-  grid-template-columns: auto 1fr;
   gap: clamp(1.2rem, 3vw, 2.4rem);
   padding: clamp(1.4rem, 3vw, 2.2rem);
   border-radius: 20px;
@@ -281,14 +280,6 @@
 
 .lot:hover::after {
   opacity: 1;
-}
-
-.lot__index {
-  font-family: var(--font-mono);
-  font-size: var(--fs-label);
-  letter-spacing: 0.2em;
-  color: var(--c-ember);
-  padding-top: 0.5em;
 }
 
 .lot__body {
@@ -337,7 +328,7 @@
 
 .lot__meter-row {
   display: grid;
-  grid-template-columns: 5.5rem 1fr auto;
+  grid-template-columns: 5.5rem 1fr;
   align-items: center;
   gap: 0.8rem;
   font-family: var(--font-mono);
@@ -395,14 +386,14 @@
 
 .roast__panel {
   display: grid;
-  gap: clamp(1.5rem, 4vh, 2.6rem);
+  gap: clamp(1rem, 2.4vh, 1.8rem);
   align-content: center;
   max-width: 34rem;
 }
 
 .roast__readout {
   display: grid;
-  gap: var(--sp-4);
+  gap: clamp(0.5rem, 1.4vh, 1rem);
   max-width: 30rem;
 }
 
@@ -411,8 +402,8 @@
   align-items: flex-start;
   gap: 0.3rem;
   font-family: var(--font-display);
-  font-size: clamp(3rem, 6.6vw, 5.6rem);
-  line-height: 0.85;
+  font-size: clamp(2.5rem, 4.6vw, 4.2rem);
+  line-height: 0.84;
   font-variant-numeric: tabular-nums;
   color: var(--c-cream);
   text-shadow: 0 0 60px color-mix(in oklab, var(--c-ember) 45%, transparent);
@@ -436,7 +427,7 @@
 .roast__desc {
   color: var(--c-text-dim);
   font-size: var(--fs-small);
-  min-height: 4.6em;
+  min-height: 4.2em;
 }
 
 .roast__curve {
@@ -445,7 +436,7 @@
 
 .roast__curve svg {
   width: 100%;
-  max-width: 34rem;
+  max-width: 30rem;
   height: auto;
   overflow: visible;
 }
@@ -486,8 +477,8 @@
   margin-top: var(--sp-4);
 }
 
-/* Short viewports: the curve already carries the phase story. */
-@media (max-height: 780px) {
+/* Very short viewports: the curve already carries the phase story. */
+@media (max-height: 660px) {
   .roast__phases {
     display: none;
   }
@@ -498,7 +489,7 @@
   grid-template-columns: auto 1fr auto;
   align-items: center;
   gap: 0.9rem;
-  padding: 0.42rem 0;
+  padding: 0.3rem 0;
   border-top: 1px solid var(--c-rule);
   font-size: var(--fs-small);
   color: var(--c-text-faint);
@@ -599,12 +590,24 @@
   transform: scaleX(1);
 }
 
-.brew__step-n {
-  font-family: var(--font-mono);
-  font-size: var(--fs-label);
-  letter-spacing: 0.2em;
-  color: var(--c-ember);
-  padding-top: 0.45em;
+/* A mark rather than a number: it still anchors the row, without turning the
+   list into an enumerated checklist. */
+.brew__step-mark {
+  width: 0.42rem;
+  height: 0.42rem;
+  margin-top: 0.85em;
+  rotate: 45deg;
+  background: var(--c-hazel);
+  transition:
+    background-color 0.6s var(--ease-soft),
+    box-shadow 0.6s var(--ease-soft),
+    scale 0.6s var(--ease-out-expo);
+}
+
+.brew__step[data-on='true'] .brew__step-mark {
+  background: var(--c-ember);
+  scale: 1.25;
+  box-shadow: 0 0 16px 2px color-mix(in oklab, var(--c-ember) 60%, transparent);
 }
 
 .brew__step-title {
@@ -703,7 +706,7 @@
 .menu__row {
   position: relative;
   display: grid;
-  grid-template-columns: 2.5rem minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
   gap: clamp(0.8rem, 2vw, 2rem);
   padding: clamp(1.1rem, 2.6vw, 2rem) clamp(0.5rem, 1.5vw, 1.5rem);
@@ -729,18 +732,6 @@
 
 .menu__row:hover::before {
   transform: scaleY(1);
-}
-
-.menu__n {
-  font-family: var(--font-mono);
-  font-size: var(--fs-label);
-  letter-spacing: 0.16em;
-  color: var(--c-text-faint);
-  transition: color 0.5s var(--ease-soft);
-}
-
-.menu__row:hover .menu__n {
-  color: color-mix(in oklab, var(--c-void) 70%, transparent);
 }
 
 .menu__name {
@@ -864,17 +855,6 @@
   font-size: var(--fs-small);
   color: var(--c-text-dim);
   max-width: 26ch;
-}
-
-.plate__no {
-  position: absolute;
-  inset: clamp(1rem, 2vw, 1.6rem) clamp(1rem, 2vw, 1.6rem) auto auto;
-  z-index: 1;
-  font-family: var(--font-mono);
-  font-size: var(--fs-label);
-  letter-spacing: 0.2em;
-  color: var(--c-crema);
-  mix-blend-mode: difference;
 }
 
 /* CSS-composed "photography".

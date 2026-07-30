@@ -18,7 +18,6 @@ export function Preloader({ ready, onDone }: Props) {
   const bar = useRef<HTMLElement>(null);
   const word = useRef<HTMLSpanElement>(null);
   const curtain = useRef<HTMLDivElement>(null);
-  const [count, setCount] = useState(0);
   const [wordIndex, setWordIndex] = useState(0);
   const [done, setDone] = useState(false);
   const finished = useRef(false);
@@ -31,7 +30,6 @@ export function Preloader({ ready, onDone }: Props) {
       duration: prefersReducedMotion() ? 0.2 : 2.1,
       ease: 'power2.out',
       onUpdate: () => {
-        setCount(Math.round(state.v * 100));
         if (bar.current) bar.current.style.transform = `scaleX(${state.v})`;
       },
     });
@@ -77,7 +75,6 @@ export function Preloader({ ready, onDone }: Props) {
       duration: reduced ? 0.1 : 0.5,
       ease: 'power2.inOut',
       onUpdate: () => {
-        setCount(Math.round(state.v * 100));
         if (bar.current) bar.current.style.transform = `scaleX(${state.v})`;
       },
     });
@@ -114,8 +111,8 @@ export function Preloader({ ready, onDone }: Props) {
             <span ref={word}>{WORDS[wordIndex]}</span>
           </h1>
           <div className="loader__meta">
-            <span>Ember &amp; Oak — Est. 2014</span>
-            <span className="loader__count">{String(count).padStart(3, '0')}%</span>
+            <span>Ember &amp; Oak</span>
+            <span>Shoreditch</span>
           </div>
           <div className="loader__bar">
             <i ref={bar} />

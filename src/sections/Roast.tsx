@@ -78,7 +78,7 @@ export function Roast() {
           <div className="roast__panel scrim">
             <div className="roast__readout">
               <div className="section__head">
-                <span className="label">02 — Roast</span>
+                <span className="label">Roast</span>
               </div>
 
               <h2 className="panel-title" id="roast-title">

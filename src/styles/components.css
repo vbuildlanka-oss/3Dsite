@@ -239,14 +239,6 @@
   transform: scaleX(1);
 }
 
-.nav__link-index {
-  font-family: var(--font-mono);
-  font-size: 9px;
-  color: var(--c-text-faint);
-  margin-right: 0.45em;
-  vertical-align: 0.4em;
-}
-
 .nav .nav__cta {
   display: none;
 }
@@ -559,11 +551,6 @@
   transform: scaleX(0);
   transform-origin: left;
   will-change: transform;
-}
-
-.loader__count {
-  font-variant-numeric: tabular-nums;
-  color: var(--c-crema);
 }
 
 .loader__curtain {

@@ -39,11 +39,15 @@ export const sceneQuality = () => {
     reduced,
     dpr: (tier === 'high' ? [1, 1.75] : tier === 'mid' ? [1, 1.4] : [0.85, 1]) as [number, number],
     postFx: tier !== 'low' && !reduced,
-    shadows: false,
+    /* Real shadow maps and AO are the two biggest realism levers, so they are
+       the last things to go — but they are also the most expensive. */
+    shadows: tier !== 'low',
+    ao: tier === 'high' || tier === 'mid',
+    shadowMapSize: tier === 'high' ? 2048 : 1024,
     beanCount: tier === 'high' ? 220 : tier === 'mid' ? 130 : 60,
-    steamCount: tier === 'high' ? 1100 : tier === 'mid' ? 650 : 280,
+    steamCount: tier === 'high' ? 1900 : tier === 'mid' ? 1000 : 340,
     emberCount: tier === 'high' ? 420 : tier === 'mid' ? 240 : 110,
     dustCount: tier === 'high' ? 700 : tier === 'mid' ? 380 : 160,
-    cupSegments: tier === 'low' ? 32 : 64,
+    cupSegments: tier === 'low' ? 40 : tier === 'mid' ? 80 : 128,
   };
 };

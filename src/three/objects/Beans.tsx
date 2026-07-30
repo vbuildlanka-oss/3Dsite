@@ -3,6 +3,7 @@ import * as THREE from 'three';
 import { useFrame } from '@react-three/fiber';
 import { createBeanGeometry, roastColor } from '../geometry/bean';
 import { stage } from '../stage';
+import { surfaceMaps } from '../textures';
 import { clamp, damp, randRange } from '@/lib/math';
 import { sceneQuality } from '@/lib/device';
 
@@ -30,23 +31,26 @@ export function Beans() {
   const count = quality.beanCount;
 
   const geometry = useMemo(
-    () => createBeanGeometry({ segments: quality.tier === 'low' ? 24 : 40 }),
+    () => createBeanGeometry({ segments: quality.tier === 'low' ? 28 : 56 }),
     [quality.tier],
   );
 
-  const material = useMemo(
-    () =>
-      new THREE.MeshPhysicalMaterial({
-        roughness: 0.58,
-        metalness: 0,
-        clearcoat: 0.3,
-        clearcoatRoughness: 0.45,
-        transparent: true,
-        opacity: 0,
-        envMapIntensity: 0.85,
-      }),
-    [],
-  );
+  const material = useMemo(() => {
+    const { normalMap, roughnessMap } = surfaceMaps('bean');
+    return new THREE.MeshPhysicalMaterial({
+      roughness: 0.58,
+      metalness: 0,
+      normalMap,
+      normalScale: new THREE.Vector2(0.4, 0.4),
+      roughnessMap,
+      vertexColors: true,
+      clearcoat: 0.3,
+      clearcoatRoughness: 0.45,
+      transparent: true,
+      opacity: 0,
+      envMapIntensity: 0.85,
+    });
+  }, []);
 
   const beans = useMemo<Bean[]>(
     () =>

@@ -8,6 +8,7 @@ import { Cup } from './objects/Cup';
 import { Beans } from './objects/Beans';
 import { HeroBean } from './objects/HeroBean';
 import { Pour } from './objects/Pour';
+import { Kettle } from './objects/Kettle';
 import { Dust } from './objects/Dust';
 import { stage } from './stage';
 import { damp } from '@/lib/math';
@@ -32,6 +33,54 @@ function Ready({ onReady }: { onReady: () => void }) {
   return null;
 }
 
+/**
+ * The shadow-casting key light. It rides inside the subject group so its pool
+ * of light and the cup's cast shadow travel together when an act re-frames the
+ * subject to one side.
+ */
+function KeyLight() {
+  const quality = useMemo(() => sceneQuality(), []);
+  const light = useRef<THREE.SpotLight>(null);
+  const target = useRef<THREE.Object3D>(null);
+
+  useEffect(() => {
+    if (light.current && target.current) light.current.target = target.current;
+  }, []);
+
+  useFrame(() => {
+    if (light.current) {
+      light.current.intensity = damp(light.current.intensity, 120 + stage.glow * 70, 2, stage.dt);
+    }
+  });
+
+  if (!quality.shadows) {
+    return <pointLight position={[0.5, 3.4, 2]} intensity={26} decay={2} color="#ffd7ab" />;
+  }
+
+  return (
+    <>
+      <object3D ref={target} position={[0, 0.42, 0]} />
+      <spotLight
+        ref={light}
+        position={[0.75, 5.6, 2.6]}
+        angle={0.52}
+        penumbra={1}
+        decay={2}
+        distance={30}
+        intensity={120}
+        color="#ffd9b2"
+        castShadow
+        shadow-mapSize-width={quality.shadowMapSize}
+        shadow-mapSize-height={quality.shadowMapSize}
+        shadow-bias={-0.0006}
+        shadow-normalBias={0.022}
+        shadow-camera-near={1.2}
+        shadow-camera-far={18}
+      />
+    </>
+  );
+}
+
 /** Everything that shares the subject's screen-space offset. */
 function Subject() {
   const group = useRef<THREE.Group>(null);
@@ -45,8 +94,10 @@ function Subject() {
 
   return (
     <group ref={group}>
+      <KeyLight />
       <Floor />
       <Cup />
+      <Kettle />
       <Pour />
       <HeroBean />
 
@@ -91,6 +142,7 @@ export function Scene({ onReady }: { onReady: () => void }) {
   return (
     <Canvas
       dpr={quality.dpr}
+      shadows={quality.shadows ? 'soft' : false}
       flat={quality.postFx}
       frameloop={visible ? 'always' : 'never'}
       camera={{ fov: 34, near: 0.08, far: 90, position: [0, 0.64, 3.3] }}
@@ -103,7 +155,7 @@ export function Scene({ onReady }: { onReady: () => void }) {
       }}
       onCreated={({ gl, scene }) => {
         gl.setClearColor(new THREE.Color('#080504'), 0);
-        scene.fog = new THREE.FogExp2(new THREE.Color('#0a0705').convertSRGBToLinear(), 0.052);
+        scene.fog = new THREE.FogExp2(new THREE.Color('#0a0705').convertSRGBToLinear(), 0.1);
       }}
     >
       <Rig />

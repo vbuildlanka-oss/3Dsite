@@ -30,7 +30,7 @@ export function Origin() {
       <div className="shell origin__grid">
         <div className="origin__sticky">
           <div className="section__head">
-            <span className="label">01 — Origin</span>
+            <span className="label">Origin</span>
           </div>
 
           <h2 className="origin__title" id="origin-title">
@@ -58,8 +58,6 @@ export function Origin() {
               data-reveal-delay={i * 0.06}
               onPointerMove={onMove}
             >
-              <span className="lot__index">{lot.id}</span>
-
               <div className="lot__body">
                 <h3 className="lot__name">
                   {lot.origin}
@@ -81,7 +79,6 @@ export function Origin() {
                       <span className="lot__meter-track">
                         <i data-reveal="meter" data-v={m.value} />
                       </span>
-                      <span>{Math.round(m.value * 100)}</span>
                     </div>
                   ))}
                 </div>

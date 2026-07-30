@@ -32,6 +32,11 @@ export type Stage = {
   steam: number;
   pour: number;
   pourLen: number;
+  /** Kettle presence — arrives before the pour, leaves after. */
+  kettle: number;
+  /** Pour spiral offset. Kettle and stream both read these so they stay welded. */
+  pourX: number;
+  pourZ: number;
   beans: number;
   heroBean: number;
   roast: number;
@@ -68,6 +73,9 @@ export const stage: Stage = {
   steam: 1,
   pour: 0,
   pourLen: 0,
+  kettle: 0,
+  pourX: 0,
+  pourZ: 0,
   beans: 0,
   heroBean: 0,
   roast: 0,
@@ -121,6 +129,12 @@ export const updateStage = (elapsed: number, delta: number, aspect: number) => {
 
   stage.pour = win(tl, 3.04, 3.15, 3.5, 3.62);
   stage.pourLen = range(tl, 3.04, 3.2);
+  stage.kettle = win(tl, 2.9, 3.06, 3.6, 3.82);
+
+  // The barista's spiral: a slow circle over the bed, widening then closing.
+  const spiral = 0.155 * stage.pour * (0.55 + 0.45 * Math.sin(elapsed * 0.5));
+  stage.pourX = Math.cos(elapsed * 2.3) * spiral;
+  stage.pourZ = Math.sin(elapsed * 2.3) * spiral;
 
   stage.steam = stage.cup * clamp(0.18 + stage.fill * 1.05) * (1 - stage.pour * 0.35);
 

@@ -4,6 +4,7 @@ import { useFrame } from '@react-three/fiber';
 import { createBeanGeometry, roastColor } from '../geometry/bean';
 import { Embers } from './Embers';
 import { stage } from '../stage';
+import { surfaceMaps } from '../textures';
 import { clamp, damp, lerp, randRange, range } from '@/lib/math';
 import { sceneQuality } from '@/lib/device';
 
@@ -25,28 +26,31 @@ export function HeroBean() {
   const orbitCount = quality.tier === 'high' ? 46 : quality.tier === 'mid' ? 28 : 14;
 
   const geometry = useMemo(
-    () => createBeanGeometry({ segments: quality.tier === 'low' ? 40 : 96 }),
+    () => createBeanGeometry({ segments: quality.tier === 'low' ? 48 : 144 }),
     [quality.tier],
   );
 
-  const material = useMemo(
-    () =>
-      new THREE.MeshPhysicalMaterial({
+  const material = useMemo(() => {
+    const { normalMap, roughnessMap } = surfaceMaps('bean');
+    return new THREE.MeshPhysicalMaterial({
         color: new THREE.Color('#8e9a6a').convertSRGBToLinear(),
+        normalMap,
+        normalScale: new THREE.Vector2(0.5, 0.5),
+        roughnessMap,
+        vertexColors: true,
         roughness: 0.85,
         metalness: 0,
         clearcoat: 0,
         clearcoatRoughness: 0.4,
         sheen: 0.14,
         sheenColor: new THREE.Color('#ffcf9b').convertSRGBToLinear(),
-        emissive: new THREE.Color('#ff5a12').convertSRGBToLinear(),
+        emissive: new THREE.Color('#e04a10').convertSRGBToLinear(),
         emissiveIntensity: 0,
         transparent: true,
         opacity: 0,
         envMapIntensity: 0.58,
-      }),
-    [],
-  );
+      });
+  }, []);
 
   const satellites = useMemo(
     () =>
@@ -86,7 +90,7 @@ export function HeroBean() {
     const r = roasted.current;
 
     roastColor(r, material.color);
-    material.roughness = lerp(0.88, 0.26, Math.pow(r, 1.3));
+    material.roughness = lerp(0.9, 0.38, Math.pow(r, 1.3));
     material.clearcoat = range(r, 0.55, 1, 0, 0.85);
     material.clearcoatRoughness = lerp(0.5, 0.14, r);
 
@@ -95,7 +99,7 @@ export function HeroBean() {
     const crackB = Math.exp(-Math.pow((r - 0.88) / 0.07, 2));
     const flicker = 0.75 + 0.25 * Math.sin(stage.time * 14) * Math.sin(stage.time * 6.3);
     const heat = (crackA * 0.7 + crackB) * flicker;
-    material.emissiveIntensity = heat * 0.34 * shown.current;
+    material.emissiveIntensity = heat * 0.2 * shown.current;
 
     if (light.current) {
       light.current.intensity = (1.8 + heat * 11) * shown.current;
@@ -106,12 +110,12 @@ export function HeroBean() {
     const g = group.current!;
     // Keep the creased face toward camera — a bean that spins away just reads
     // as an egg. Scroll turns it through a quarter, no further.
-    g.rotation.y = -0.5 + Math.sin(t * 0.22) * 0.3 + stage.tl * 0.34 + stage.px * 0.2;
+    g.rotation.y = -0.72 + Math.sin(t * 0.22) * 0.2 + stage.tl * 0.2 + stage.px * 0.16;
     g.rotation.z = 0.3 + Math.sin(t * 0.3) * 0.05 + stage.py * 0.06;
     g.rotation.x = -0.12 + Math.sin(t * 0.19) * 0.05;
     // Crack jolts: the bean visibly swells as it pops.
     const pop = 1 + crackA * 0.035 + crackB * 0.05;
-    g.scale.setScalar(lerp(0.62, 0.86, shown.current) * pop);
+    g.scale.setScalar(lerp(0.58, 0.79, shown.current) * pop);
     g.position.y = 0.28 + Math.sin(t * 0.45) * 0.06;
 
     const o = orbit.current;
@@ -132,8 +136,13 @@ export function HeroBean() {
 
   return (
     <group ref={group}>
-      <mesh ref={bean} geometry={geometry} material={material} />
-      <instancedMesh ref={orbit} args={[geometry, material, orbitCount]} frustumCulled={false} />
+      <mesh ref={bean} geometry={geometry} material={material} castShadow={quality.shadows} />
+      <instancedMesh
+        ref={orbit}
+        args={[geometry, material, orbitCount]}
+        frustumCulled={false}
+        castShadow={quality.shadows}
+      />
       <pointLight ref={light} color="#ff7a2a" distance={9} decay={2} intensity={0} />
       <Embers />
     </group>

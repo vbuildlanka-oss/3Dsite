@@ -38,7 +38,7 @@ export function Brew() {
         <div className="shell brew__inner">
           <div>
             <div className="section__head">
-              <span className="label">03 — Brew</span>
+              <span className="label">Brew</span>
             </div>
 
             <h2 className="panel-title" id="brew-title" style={{ marginBottom: '1.6rem' }}>
@@ -47,8 +47,8 @@ export function Brew() {
 
             <ol className="brew__steps">
               {BREW_STEPS.map((step, i) => (
-                <li className="brew__step" key={step.n} data-on={i === active}>
-                  <span className="brew__step-n">{step.n}</span>
+                <li className="brew__step" key={step.title} data-on={i === active}>
+                  <span className="brew__step-mark" aria-hidden="true" />
                   <div>
                     <h3 className="brew__step-title">{step.title}</h3>
                     <p className="brew__step-body">{step.body}</p>

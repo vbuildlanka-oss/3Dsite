@@ -32,7 +32,7 @@ export function Visit() {
         <div className="visit__grid">
           <div>
             <div className="section__head">
-              <span className="label">05 — Visit</span>
+              <span className="label">Visit</span>
             </div>
 
             <h2 className="visit__title" id="visit-title">

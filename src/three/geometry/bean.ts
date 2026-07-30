@@ -29,8 +29,8 @@ const gauss = (x: number, sigma: number) => Math.exp(-(x * x) / (2 * sigma * sig
 export const createBeanGeometry = ({
   segments = 64,
   length = 1,
-  width = 0.63,
-  thickness = 0.43,
+  width = 0.57,
+  thickness = 0.395,
   crease = 0.94,
   lips = 0.13,
 }: BeanOptions = {}) => {
@@ -38,12 +38,17 @@ export const createBeanGeometry = ({
   const pos = geo.attributes.position as THREE.BufferAttribute;
   const v = new THREE.Vector3();
 
+  // Silver skin: the pale chaff that stays lodged in the crease after hulling.
+  // Baked as vertex colour so it survives the roast tint, which is applied as
+  // an instance colour and multiplies on top.
+  const tint = new Float32Array(pos.count * 3);
+
   for (let i = 0; i < pos.count; i++) {
     v.fromBufferAttribute(pos, i);
 
     const x = v.x * length;
     // Blunt the ends: real beans are stubbier than an ellipsoid at the tips.
-    const stub = 1 + 0.08 * (1 - Math.abs(v.x));
+    const stub = 1 + 0.05 * (1 - Math.abs(v.x));
     let y = v.y * width * stub;
     let z = v.z * thickness * stub;
 
@@ -69,8 +74,15 @@ export const createBeanGeometry = ({
     y += Math.sin(x * 3.1) * 0.008;
 
     pos.setXYZ(i, x, y, z);
+
+    const chaff = front ? gauss(y / width, 0.06) * along : 0;
+    const shade = 1 + chaff * 0.85;
+    tint[i * 3] = shade;
+    tint[i * 3 + 1] = shade * (1 - chaff * 0.04);
+    tint[i * 3 + 2] = shade * (1 - chaff * 0.12);
   }
 
+  geo.setAttribute('color', new THREE.BufferAttribute(tint, 3));
   geo.computeVertexNormals();
   geo.computeBoundingSphere();
   return geo;
@@ -80,9 +92,9 @@ export const createBeanGeometry = ({
 const ROAST_STOPS = [
   '#8e9a6a', // raw / green
   '#c9a95f', // drying, yellowing
-  '#b2793c', // cinnamon
-  '#8a4a26', // city
-  '#54291a', // full city
+  '#a3733f', // cinnamon
+  '#7b4a2c', // city
+  '#4e2c1c', // full city
   '#2c1610', // dark, oily
 ].map((hex) => new THREE.Color(hex).convertSRGBToLinear());
 

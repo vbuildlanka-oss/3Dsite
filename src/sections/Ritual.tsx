@@ -81,11 +81,10 @@ export function Ritual() {
         <div className="ritual__pin">
           <div className="ritual__track" ref={track}>
             {PLATES.map((plate) => (
-              <figure className="plate" key={plate.n} data-cursor="Look">
+              <figure className="plate" key={plate.title} data-cursor="Look">
                 <div className="plate__art">
                   <div className={`art ${plate.art}`} />
                 </div>
-                <span className="plate__no">{plate.n}</span>
                 <figcaption className="plate__cap">
                   <h3>{plate.title}</h3>
                   <p>{plate.body}</p>

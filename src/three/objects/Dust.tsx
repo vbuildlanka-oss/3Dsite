@@ -49,7 +49,7 @@ export function Dust() {
     const u = material.uniforms;
     u.uTime.value = stage.time;
     u.uViewHeight.value = gl.domElement.height;
-    u.uIntensity.value = damp(u.uIntensity.value, stage.dust * 0.5, 2.5, stage.dt);
+    u.uIntensity.value = damp(u.uIntensity.value, stage.dust * 0.22, 2.5, stage.dt);
     // Motes lag the scroll, drifting against the direction of travel.
     u.uDrift.value = damp(u.uDrift.value, -stage.vel * 0.9, 2, stage.dt);
   });

@@ -24,7 +24,7 @@ export function Steam({
   count = 900,
   radius = 0.62,
   rise = 1.1,
-  size = 0.34,
+  size = 0.19,
   spread = 0.9,
   intensity = (s) => s.steam,
   position = [0, 0, 0],
@@ -82,7 +82,7 @@ export function Steam({
     u.uTime.value = stage.time;
     u.uViewHeight.value = gl.domElement.height;
     smoothed.current = damp(smoothed.current, intensity(stage), 4, stage.dt);
-    u.uIntensity.value = smoothed.current * 0.036;
+    u.uIntensity.value = smoothed.current * 0.055;
     u.uVel.value = damp(u.uVel.value, stage.vel * 0.8, 3, stage.dt);
     if (points.current) points.current.visible = smoothed.current > 0.004;
   });

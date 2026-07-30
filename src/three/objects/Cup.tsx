@@ -1,10 +1,18 @@
 import { useEffect, useMemo, useRef } from 'react';
 import * as THREE from 'three';
 import { useFrame } from '@react-three/fiber';
-import { CUP, createCupGeometry, createSaucerGeometry, innerRadiusAt } from '../geometry/cup';
+import {
+  CUP,
+  createCupGeometry,
+  createCupInteriorGeometry,
+  createHandleGeometry,
+  createSaucerGeometry,
+  innerRadiusAt,
+} from '../geometry/cup';
 import { LiquidMaterial } from '../shaders/liquid';
 import { Steam } from './Steam';
 import { stage, type Stage } from '../stage';
+import { surfaceMaps } from '../textures';
 import { clamp, damp, lerp } from '@/lib/math';
 import { sceneQuality } from '@/lib/device';
 
@@ -18,16 +26,17 @@ type Props = {
   scale?: number;
   saucer?: boolean;
   steamCount?: number;
-  /** Per-cup drift so a row of cups never moves in lockstep. */
+  /** Per-cup phase so a row of cups never moves in lockstep. */
   seed?: number;
 };
 
 const LIQUID_LOW = CUP.floor + 0.03;
-const LIQUID_HIGH = CUP.height - 0.06;
+const LIQUID_HIGH = CUP.height - 0.075;
 
 /**
- * The hero object: lathe-turned stoneware, a shader liquid surface whose radius
- * tracks the interior wall as it fills, and its own steam column.
+ * The hero object: turned stoneware with a rolled rim and a swept strap handle,
+ * a cream interior shell, and a shader liquid whose radius tracks the interior
+ * wall as the level rises.
  */
 export function Cup({
   presence = (s) => s.cup,
@@ -46,62 +55,68 @@ export function Cup({
   const liquid = useRef<THREE.Mesh>(null);
   const steamAnchor = useRef<THREE.Group>(null);
 
-  const cupGeo = useMemo(() => createCupGeometry(quality.cupSegments), [quality.cupSegments]);
-  const saucerGeo = useMemo(() => createSaucerGeometry(quality.cupSegments), [quality.cupSegments]);
-  const handleGeo = useMemo(
-    () => new THREE.TorusGeometry(0.29, 0.052, quality.tier === 'low' ? 8 : 16, quality.cupSegments),
-    [quality],
-  );
-  const discGeo = useMemo(() => new THREE.CircleGeometry(1, quality.cupSegments), [quality.cupSegments]);
+  const seg = quality.cupSegments;
+  const detail = quality.tier === 'low' ? 0.4 : 1;
+
+  const cupGeo = useMemo(() => createCupGeometry(seg), [seg]);
+  const interiorGeo = useMemo(() => createCupInteriorGeometry(seg), [seg]);
+  const saucerGeo = useMemo(() => createSaucerGeometry(seg), [seg]);
+  const handleGeo = useMemo(() => createHandleGeometry(detail), [detail]);
+  const discGeo = useMemo(() => new THREE.CircleGeometry(1, Math.max(48, seg)), [seg]);
 
   const liquidMat = useMemo(() => new LiquidMaterial(), []);
 
-  // Dark glazed exterior, cream interior: the two-tone reads clearly against
-  // overlaid type and gives the crema something to bounce off.
-  const glaze = useMemo(
-    () =>
-      new THREE.MeshPhysicalMaterial({
-        color: new THREE.Color('#1b100b').convertSRGBToLinear(),
-        roughness: 0.36,
-        metalness: 0,
-        clearcoat: 0.55,
-        clearcoatRoughness: 0.34,
-        sheen: 0.55,
-        sheenColor: new THREE.Color('#ffd9b0').convertSRGBToLinear(),
-        sheenRoughness: 0.6,
-        side: THREE.FrontSide,
-        transparent: true,
-        opacity: 1,
-        envMapIntensity: 0.8,
-      }),
-    [],
-  );
+  // Dark glazed exterior, cream interior. Real ceramic has orange-peel in the
+  // glaze, so both share a fine procedural normal + roughness pair.
+  const glaze = useMemo(() => {
+    const { normalMap, roughnessMap } = surfaceMaps('ceramic');
+    return new THREE.MeshPhysicalMaterial({
+      color: new THREE.Color('#1b100b').convertSRGBToLinear(),
+      roughness: 0.4,
+      metalness: 0,
+      normalMap,
+      normalScale: new THREE.Vector2(0.12, 0.12),
+      roughnessMap,
+      clearcoat: 0.62,
+      clearcoatRoughness: 0.3,
+      sheen: 0.45,
+      sheenColor: new THREE.Color('#ffd9b0').convertSRGBToLinear(),
+      sheenRoughness: 0.6,
+      side: THREE.FrontSide,
+      transparent: true,
+      opacity: 1,
+      envMapIntensity: 0.85,
+    });
+  }, []);
 
-  const liner = useMemo(
-    () =>
-      new THREE.MeshPhysicalMaterial({
-        color: new THREE.Color('#e7dac6').convertSRGBToLinear(),
-        roughness: 0.5,
-        metalness: 0,
-        clearcoat: 0.4,
-        clearcoatRoughness: 0.35,
-        side: THREE.FrontSide,
-        transparent: true,
-        envMapIntensity: 1.05,
-      }),
-    [],
-  );
+  const liner = useMemo(() => {
+    const { normalMap, roughnessMap } = surfaceMaps('ceramic');
+    return new THREE.MeshPhysicalMaterial({
+      color: new THREE.Color('#cdbca4').convertSRGBToLinear(),
+      roughness: 0.46,
+      metalness: 0,
+      normalMap,
+      normalScale: new THREE.Vector2(0.09, 0.09),
+      roughnessMap,
+      clearcoat: 0.5,
+      clearcoatRoughness: 0.32,
+      side: THREE.FrontSide,
+      transparent: true,
+      envMapIntensity: 0.75,
+    });
+  }, []);
 
   useEffect(
     () => () => {
-      [cupGeo, saucerGeo, handleGeo, discGeo].forEach((g) => g.dispose());
+      [cupGeo, interiorGeo, saucerGeo, handleGeo, discGeo].forEach((g) => g.dispose());
       [liquidMat, glaze, liner].forEach((m) => m.dispose());
     },
-    [cupGeo, saucerGeo, handleGeo, discGeo, liquidMat, glaze, liner],
+    [cupGeo, interiorGeo, saucerGeo, handleGeo, discGeo, liquidMat, glaze, liner],
   );
 
   const shown = useRef(0);
-  const level = useRef(0.5);
+  const level = useRef(LIQUID_LOW);
+  const tilt = useRef(0);
 
   useFrame(() => {
     const p = clamp(presence(stage));
@@ -110,20 +125,19 @@ export function Cup({
 
     if (group.current) {
       group.current.visible = vis;
-      // Fade-in doubles as a settle: the cup rises and scales into frame.
-      const s = scale * lerp(0.9, 1, shown.current);
-      group.current.scale.setScalar(s);
+      // The fade doubles as a settle: the cup rises and scales into frame.
+      group.current.scale.setScalar(scale * lerp(0.92, 1, shown.current));
       group.current.position.set(
         position[0],
-        position[1] + lerp(-0.22, 0, shown.current),
+        position[1] + lerp(-0.18, 0, shown.current),
         position[2],
       );
 
       const t = stage.time + seed * 12;
       group.current.rotation.y =
-        rotation + stage.px * 0.12 + Math.sin(t * 0.24) * 0.05 + stage.tl * 0.14;
-      group.current.rotation.z = Math.sin(t * 0.19) * 0.008;
-      group.current.rotation.x = stage.py * 0.03;
+        rotation + stage.px * 0.1 + Math.sin(t * 0.24) * 0.04 + stage.tl * 0.1;
+      group.current.rotation.z = Math.sin(t * 0.19) * 0.006;
+      group.current.rotation.x = stage.py * 0.02;
     }
     if (!vis) return;
 
@@ -133,46 +147,53 @@ export function Cup({
     const f = clamp(fill(stage));
     level.current = damp(level.current, lerp(LIQUID_LOW, LIQUID_HIGH, f), 5, stage.dt);
     const y = level.current;
-    const r = innerRadiusAt(y) - 0.006;
+    const r = innerRadiusAt(y) - 0.008;
+
+    // Inertia: the surface lags the cup, so a fast scroll tips the liquid.
+    tilt.current = damp(tilt.current, stage.vel * 0.055, 3.5, stage.dt);
 
     if (liquid.current) {
       liquid.current.position.y = y;
       liquid.current.scale.setScalar(r);
+      liquid.current.rotation.z = tilt.current;
+      liquid.current.rotation.x = -Math.PI / 2;
       liquid.current.visible = f > 0.015;
     }
-    if (steamAnchor.current) steamAnchor.current.position.y = y + 0.02;
+    if (steamAnchor.current) steamAnchor.current.position.y = y + 0.015;
 
     const u = liquidMat.uniforms;
     u.uTime.value = stage.time;
     u.uOpacity.value = shown.current;
     u.uCrema.value = damp(u.uCrema.value, clamp(crema(stage)), 4, stage.dt);
     u.uVel.value = damp(u.uVel.value, stage.vel * 0.35, 4, stage.dt);
-    u.uAgitate.value = damp(u.uAgitate.value, 0.2 + stage.pour * 1.6, 4, stage.dt);
+    u.uAgitate.value = damp(u.uAgitate.value, 0.18 + stage.pour * 1.9, 4, stage.dt);
   });
+
+  const shadows = quality.shadows;
 
   return (
     <group ref={group}>
-      {saucer && <mesh geometry={saucerGeo} material={glaze} scale={[0.78, 1, 0.78]} />}
-
-      <group position={[0, 0.045, 0]}>
-        <mesh geometry={cupGeo} material={glaze} castShadow={false} />
+      {saucer && (
         <mesh
-          geometry={handleGeo}
+          geometry={saucerGeo}
           material={glaze}
-          position={[CUP.rimOuter * 0.95, 0.66, 0]}
-          rotation={[0, 0, -0.14]}
-          scale={[0.82, 1.12, 1]}
+          scale={[0.8, 1, 0.8]}
+          castShadow={shadows}
+          receiveShadow={shadows}
         />
+      )}
 
-        {/* Cream interior, nested just inside the glaze so only its wall shows. */}
-        <mesh geometry={cupGeo} material={liner} scale={[0.955, 0.995, 0.955]} />
+      <group position={[0, saucer ? CUP.seat : 0, 0]}>
+        <mesh geometry={cupGeo} material={glaze} castShadow={shadows} receiveShadow={shadows} />
+        <mesh geometry={interiorGeo} material={liner} />
+        <mesh geometry={handleGeo} material={glaze} castShadow={shadows} receiveShadow={shadows} />
 
         <mesh
           ref={liquid}
           geometry={discGeo}
           material={liquidMat}
           rotation={[-Math.PI / 2, 0, 0]}
-          position={[0, 0.5, 0]}
+          position={[0, LIQUID_LOW, 0]}
         />
 
         <group ref={steamAnchor}>
@@ -180,7 +201,7 @@ export function Cup({
             count={steamCount ?? quality.steamCount}
             radius={CUP.rimInner * 0.72}
             rise={1.1}
-            size={quality.tier === 'low' ? 0.4 : 0.34}
+            size={quality.tier === 'low' ? 0.24 : 0.19}
             intensity={steam}
           />
         </group>
